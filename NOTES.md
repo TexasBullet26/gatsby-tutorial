@@ -71,3 +71,28 @@ Add the above files and then run `gatsby develop`.
 Now let's start querying.
 
 ### Your first GraphQL query
+
+When building sites, you'll probably want to reuse common bits of data -- like the _site title_ for example. Look at the `/about/` page. You'll notice that you have the site title (`Pandas Eating Lots`) in both the layout component (the site header) as well as in the `<h1/>` of the `about.js` page (the page header).
+
+But what if you want to change the site title in the future? You'd have to search for the title across all your components and edit each instance. This is both cumbersome and error-prone, especially for larger, more complex sites. Instead, you can store the title in one location and reference that location from other files; Change the title in a single place, and Gatsby will _pull_ your updated title into files that reference it.
+
+The place for these common bits of data is the `siteMetadata` object in the `gatsby-config.js` file. Let's add your site title to the `gatsby-config.js` file:
+
+```javascript
+module.exports = {
+  siteMetadata: {
+    title: `Title from siteMetadata`,
+  },
+  plugins: [
+    `gatsby-plugin-emotion`,
+    {
+      resolve: `gatsby-plugin-typography`,
+      options: {
+        pathToConfigModule: `src/utils/typography,
+      },
+    },
+  ],
+}
+```
+
+Restart the development server.
