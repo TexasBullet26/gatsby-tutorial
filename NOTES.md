@@ -211,3 +211,207 @@ So almost everywhere, changes you make will immediately take effect. Edit the `g
 ### What's coming next?
 
 Next, you’ll be learning about how to pull data into your Gatsby site using GraphQL with source plugins in part five of the tutorial.
+
+# Source plugins
+
+> This tutorial is part of a series about Gatsby's data layer. Make sure you've gone through part 4 before continuing here.
+
+### What's in this tutorial?
+
+In this tutorial, you’ll be learning about how to pull data into your Gatsby site using GraphQL and source plugins. Before you learn about these plugins, however, you’ll want to know how to use something called GraphiQL, a tool that helps you structure your queries correctly.
+
+### Introducing GraphiQL
+
+GraphiQL is the GraphQL integrated development environment (IDE). It’s a powerful (and all-around awesome) tool you’ll use often while building Gatsby websites.
+
+You can access it when your site’s development server is running—normally at [http://localhost:8000/___graphql.](http://localhost:8000/___graphql)
+
+[](https://www.gatsbyjs.org/graphiql-explore.mp4)
+
+Here you poke around the built-in `Site` “type” and see what fields are available on it—including the `siteMetadata` object you queried earlier. Try opening GraphiQL and play with your data! Press `Ctrl + Space` to bring up the autocomplete window and `Ctrl + Enter` to run the GraphQL query. You’ll be using GraphiQL a lot more through the remainder of the tutorial.
+
+### Source plugins
+
+Data in Gatsby sites can come from anywhere: APIs, databases, CMSs, local files, etc.
+
+Source plugins fetch data from their source. E.g. the filesystem source plugin knows how to fetch data from the file system. The WordPress plugin knows how to fetch data from the WordPress API.
+
+Let’s add `gatsby-source-filesystem` and explore how it works.
+
+First install the plugin at the root of the project:
+
+```sh
+npm install --save gatsby-source-filesystem
+```
+
+Then add it to your `gatsby-config.js`:
+
+```javascript
+module.exports = {
+  siteMetadata: {
+    title: `Pandas Eating Lots`,
+  },
+  plugins: [
+    {
+      resolve: `gatsby-source-filesystem`,
+      options: {
+        name: `src`,
+        path: `${__dirname}/src/`,
+      },
+    },
+    `gatsby-plugin-emotion`,
+    {
+      resolve: `gatsby-plugin-typography`,
+      options: {
+        pathToConfigModule: `src/utils/typography`,
+      },
+    },
+  ],
+}
+```
+
+Save that and restart the gatsby development server. Then open up GraphiQL again.
+
+If you bring up the autocomplete window, you’ll see:
+
+[#image](https://www.gatsbyjs.org/static/graphiql-filesystem-58fd47743994afe6ec4c714a53453695-5b1c4.png)
+
+Hit `Enter` on `allFile` then type `Ctrl + Enter` to run a query.
+
+[#image](https://www.gatsbyjs.org/static/filesystem-query-c3247954e5e0325032e945f847611d92-f35d4.png)
+
+Delete the `id` from the query and bring up the autocomplete again (`Ctrl + Space`).
+
+[#image](https://www.gatsbyjs.org/static/filesystem-autocomplete-2962bc394bc6ed177276cde5db5ce6b1-f35d4.png)
+
+Try adding a number of fields to your query, pressing `Ctrl + Enter` each time to re-run the query. You’ll see something like this:
+
+[#image](https://www.gatsbyjs.org/static/allfile-query-b48a3d23278afabbd368b1c2634c73f3-f35d4.png)
+
+The result is an array of File “nodes” (node is a fancy name for an object in a “graph”). Each File object has the fields you queried for.
+
+### Build a page with a GraphQL query
+
+Building new pages with Gatsby often starts in GraphiQL. You first sketch out the data query by playing in GraphiQL then copy this to a React page component to start building the UI.
+
+Let’s try this.
+
+Create a new file at `src/pages/my-files.js` with the `allFile` GraphQL query you just created:
+
+```javascript
+import React from "react"
+import { graphql } from "gatsby"
+import Layout from "../components/layout"
+
+export default ({ data }) => {
+  console.log(data)
+  return (
+    <Layout>
+      <div>Hello world</div>
+    </Layout>
+  )
+}
+
+export const query = graphql`
+  query {
+    allFile {
+      edges {
+        node {
+          relativePath
+          prettySize
+          extension
+          birthTime(fromNow: true)
+        }
+      }
+    }
+  }
+`
+```
+
+The `console.log(data)` line is highlighted above. It’s often helpful when creating a new component to console out the data you’re getting from the GraphQL query so you can explore the data in your browser console while building the UI.
+
+If you visit the new page at `/my-files/` and open up your browser console you will see something like:
+
+[](https://www.gatsbyjs.org/static/data-in-console-3fd681a2f33d483a82d067b07704f7e5-90960.png)
+
+The shape of the data matches the shape of the GraphQL query.
+
+Let’s add some code to your component to print out the File data.
+
+```javascript
+import React from "react"
+import { graphql } from "gatsby"
+import Layout from "../components/layout"
+
+export default ({ data }) => {
+  console.log(data)
+  return (
+    <Layout>
+      
+<div>
+        
+<h1>My Site's Files</h1>
+        
+<table>
+          
+<thead>
+            
+<tr>
+              
+<th>relativePath</th>
+              
+<th>prettySize</th>
+              
+<th>extension</th>
+              
+<th>birthTime</th>
+            
+</tr>
+          
+</thead>
+          
+<tbody>
+            
+{data.allFile.edges.map(({ node }, index) => (
+              <tr key={index}>
+                
+<td>{node.relativePath}</td>
+                
+<td>{node.prettySize}</td>
+                
+<td>{node.extension}</td>
+                
+<td>{node.birthTime}</td>
+              
+</tr>
+            ))}
+          
+</tbody>
+        
+</table>
+      
+</div>
+    
+</Layout>
+  )
+}
+
+export const query = graphql`
+  query {
+    allFile {
+      edges {
+        node {
+          relativePath
+          prettySize
+          extension
+          birthTime(fromNow: true)
+        }
+      }
+    }
+  }
+`
+```
+
+### What's coming next?
+
+Now you’ve learned how source plugins bring data into Gatsby’s data system. In the next tutorial, you’ll learn how transformer plugins transform the raw content brought by source plugins. The combination of source plugins and transformer plugins can handle all data sourcing and data transformation you might need when building a Gatsby site. Click here for the [next tutorial to learn about transformer plugins.](https://www.gatsbyjs.org/tutorial/part-six/)
