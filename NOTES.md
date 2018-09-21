@@ -41,3 +41,33 @@ GraphQL was invented at Facebook to help product engineers _pull_ needed data in
 GraphQL is a **q**uery **l**anguage (the _QL_ part of its name). If you're familier with SQL, it works in a very similar way. Using a special syntax, you describe the data you want in your component and then that data is given to you.
 
 Gatsby uses GraphQL to enable components to declare the data they need.
+
+### Create a new example site
+
+Let's create another new site for this part of the tutorial. You're going to build a Markdown blog called "Pandas Eating Lots". It's dedicated to showing off the best pictures and videos of pandas eating lots of food. Along the way you'll by dipping your toes into GraphQL and Gatsby's Markdown support.
+
+Create a new Gatsby site:
+
+`gatsby new tutorial-part-four https://github.com/gatsbyjs/gatsby-starter-hello-world`
+
+Then install some other needed dependencies at the root of the project. You'll use the Typography theme "Kirkham", and you'll try out a CSS-in-JS library [**Emotion**](https://emotion.sh/):
+
+`npm install --save gatsby-plugin-typography typography react-typography typography-theme-kirkham gatsby-plugin-emotion emotion react-emotion emotion-server`
+
+Let's set up a site similar to what you ended with in Part Three. This site will have a layout component and two page components:
+
+`src/components/layout.js`
+
+`src/pages/index.js`
+
+`src/pages/about.js`
+
+`src/utils/typography.js`
+
+`gatsby-config.js`
+
+Add the above files and then run `gatsby develop`.
+
+Now let's start querying.
+
+### Your first GraphQL query
