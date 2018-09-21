@@ -142,3 +142,72 @@ The basic GraphQL query that retrieves the `title` in our `layout.js` changes ab
 > In [**part five**](https://www.gatsbyjs.org/tutorial/part-five/#introducing-graphiql) we'll meet a tool that lets us interactively explore the data available through GraphQL, and help formulate queries like the one above.
 
 Page queries live outside of the component definition -- by convention at the end of a page component file -- and are only available on page components.
+
+### Use a StaticQuery
+
+StaticQuery is a new API introduced in Gatsby v2 that allows non-page components (like our `layout.js` component), to retrieve data via GraphQL queries.
+
+Go ahead and add a `<StaticQuery/>` to your `src/components/layout.js` file, and a `{data.site.siteMetadata.title}` reference that uses this data. When you are done your file looks like this:
+
+```javascript
+import React from 'react';
+import { css } from 'react-emotion';
+import { StaticQuery, Link, graphql } from 'gatsby';
+
+import { rhythm } from '../utils/typography';
+
+export default ({ children }) => (
+  <StaticQuery
+    query={graphql`
+      query {
+        site {
+          siteMetadata {
+            title
+          }
+        }
+      }
+    `}
+    render={data => (
+      <div
+        className={css`
+          margin: 0 auto;
+          max-width: 700px;
+          padding: ${rhythm(2)};
+          padding-top: ${rhythm(1.5)};
+        `}
+      >
+        <Link to={`/`}>
+          <h3
+            className={css`
+              margin-bottom: ${rhythm(2)};
+              display: inline-block;
+              font-style: normal;
+            `}
+          >
+            {data.site.siteMetadata.title}
+          </h3>
+        </Link>
+        <Link
+          to={`/about/`}
+          className={css`
+            float: right;
+          `}
+        >
+          About
+        </Link>
+        {children}
+      </div>
+    )}
+  />
+);
+```
+
+But let’s restore the real title.
+
+One of the core principles of Gatsby is that _creators need an immediate connection to what they’re creating_ (hat tip to Bret Victor). In other words, when you make any change to code you should immediately see the effect of that change. You manipulate an input of Gatsby and you see the new output showing up on the screen.
+
+So almost everywhere, changes you make will immediately take effect. Edit the `gatsby-config.js` file again, this time changing the `title` back to “Pandas Eating Lots”. The change should show up very quickly in your site pages.
+
+### What's coming next?
+
+Next, you’ll be learning about how to pull data into your Gatsby site using GraphQL with source plugins in part five of the tutorial.
