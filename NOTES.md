@@ -96,3 +96,49 @@ module.exports = {
 ```
 
 Restart the development server.
+
+### Use a page query
+
+Now the site title is available to be queried; Let's add it to the `about.js` file using a [**page query:**](https://www.gatsbyjs.org/docs/page-query)
+
+```javascript
+import React from 'react';
+import { graphql } from 'gatsby';
+import Layout from '../components/layout';
+
+export default ({ data }) => (
+  <Layout>
+    <h1>About {data.site.siteMetadata.title}</h1>
+    <p>
+      We're the only site running on your computer dedicated to showing the best
+      photos and videos of pandas eating lots of food.
+    </p>
+  </Layout>
+);
+
+export const query = graphql`
+  query {
+    site {
+      siteMetadata {
+        title
+      }
+    }
+  }
+`;
+```
+
+The basic GraphQL query that retrieves the `title` in our `layout.js` changes above is:
+
+```javascript
+{
+  site {
+    siteMetadata {
+      title
+    }
+  }
+}
+```
+
+> In [**part five**](https://www.gatsbyjs.org/tutorial/part-five/#introducing-graphiql) we'll meet a tool that lets us interactively explore the data available through GraphQL, and help formulate queries like the one above.
+
+Page queries live outside of the component definition -- by convention at the end of a page component file -- and are only available on page components.
