@@ -224,7 +224,7 @@ In this tutorial, you’ll be learning about how to pull data into your Gatsby s
 
 GraphiQL is the GraphQL integrated development environment (IDE). It’s a powerful (and all-around awesome) tool you’ll use often while building Gatsby websites.
 
-You can access it when your site’s development server is running—normally at [http://localhost:8000/___graphql.](http://localhost:8000/___graphql)
+You can access it when your site’s development server is running—normally at [http://localhost:8000/\_\_\_graphql.](http://localhost:8000/___graphql)
 
 [](https://www.gatsbyjs.org/graphiql-explore.mp4)
 
@@ -267,7 +267,7 @@ module.exports = {
       },
     },
   ],
-}
+};
 ```
 
 Save that and restart the gatsby development server. Then open up GraphiQL again.
@@ -299,18 +299,18 @@ Let’s try this.
 Create a new file at `src/pages/my-files.js` with the `allFile` GraphQL query you just created:
 
 ```javascript
-import React from "react"
-import { graphql } from "gatsby"
-import Layout from "../components/layout"
+import React from 'react';
+import { graphql } from 'gatsby';
+import Layout from '../components/layout';
 
 export default ({ data }) => {
-  console.log(data)
+  console.log(data);
   return (
     <Layout>
       <div>Hello world</div>
     </Layout>
-  )
-}
+  );
+};
 
 export const query = graphql`
   query {
@@ -325,7 +325,7 @@ export const query = graphql`
       }
     }
   }
-`
+`;
 ```
 
 The `console.log(data)` line is highlighted above. It’s often helpful when creating a new component to console out the data you’re getting from the GraphQL query so you can explore the data in your browser console while building the UI.
@@ -339,62 +339,48 @@ The shape of the data matches the shape of the GraphQL query.
 Let’s add some code to your component to print out the File data.
 
 ```javascript
-import React from "react"
-import { graphql } from "gatsby"
-import Layout from "../components/layout"
+import React from 'react';
+import { graphql } from 'gatsby';
+import Layout from '../components/layout';
 
 export default ({ data }) => {
-  console.log(data)
+  console.log(data);
   return (
     <Layout>
-      
-<div>
-        
-<h1>My Site's Files</h1>
-        
-<table>
-          
-<thead>
-            
-<tr>
-              
-<th>relativePath</th>
-              
-<th>prettySize</th>
-              
-<th>extension</th>
-              
-<th>birthTime</th>
-            
-</tr>
-          
-</thead>
-          
-<tbody>
-            
-{data.allFile.edges.map(({ node }, index) => (
+      <div>
+        <h1>My Site's Files</h1>
+
+        <table>
+          <thead>
+            <tr>
+              <th>relativePath</th>
+
+              <th>prettySize</th>
+
+              <th>extension</th>
+
+              <th>birthTime</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {data.allFile.edges.map(({ node }, index) => (
               <tr key={index}>
-                
-<td>{node.relativePath}</td>
-                
-<td>{node.prettySize}</td>
-                
-<td>{node.extension}</td>
-                
-<td>{node.birthTime}</td>
-              
-</tr>
+                <td>{node.relativePath}</td>
+
+                <td>{node.prettySize}</td>
+
+                <td>{node.extension}</td>
+
+                <td>{node.birthTime}</td>
+              </tr>
             ))}
-          
-</tbody>
-        
-</table>
-      
-</div>
-    
-</Layout>
-  )
-}
+          </tbody>
+        </table>
+      </div>
+    </Layout>
+  );
+};
 
 export const query = graphql`
   query {
@@ -409,9 +395,372 @@ export const query = graphql`
       }
     }
   }
-`
+`;
 ```
 
 ### What's coming next?
 
 Now you’ve learned how source plugins bring data into Gatsby’s data system. In the next tutorial, you’ll learn how transformer plugins transform the raw content brought by source plugins. The combination of source plugins and transformer plugins can handle all data sourcing and data transformation you might need when building a Gatsby site. Click here for the [next tutorial to learn about transformer plugins.](https://www.gatsbyjs.org/tutorial/part-six/)
+
+# Tutorial part seven (Programmatically create pages from data)
+
+### What's in this tutorial?
+
+In the previous tutorial, you created a nice index page that queries markdown files and produces a list of blog post titles and excerpts. But you don’t want to just see excerpts, you want actual pages for your markdown files.
+
+You could continue to create pages by placing React components in `src/pages`. However, you’ll now learn how to _programmatically_ create pages from _data_. Gatsby is _not_ limited to making pages from files like many static site generators. Gatsby lets you use GraphQL to query your _data_ and _map_ the query results to _pages_—all at build time. This is a really powerful idea. You’ll be exploring its implications and ways to use it for the remainder of this part of the tutorial.
+
+Let’s get started.
+
+### Creating slugs for pages
+
+Creating new pages has two steps:
+
+1. Generate the “path” or “slug” for the page.
+2. Create the page.
+
+**Note:** _Often data sources will directly provide a slug or pathname for content — when working with one of those systems (e.g. a CMS), you don’t need to create the slugs yourself like you do with markdown files._
+
+To create your markdown pages, you’ll learn to use two Gatsby APIs `onCreateNode` and `createPages`. These are two workhorse APIs you’ll see used in many sites and plugins.
+
+We do our best to make Gatsby APIs simple to implement. To implement an API, you export a function with the name of the API from `gatsby-node.js`.
+
+So let’s do that. In the root of your site, create a file named `gatsby-node.js`. Then add the following.
+
+```javascript
+exports.onCreateNode = ({ node }) => {
+  console.log(node.internal.type);
+};
+```
+
+This `onCreateNode` function will be called by Gatsby whenever a new node is created (or updated).
+
+Stop and restart the development server. As you do, you’ll see quite a few newly created nodes get logged to the terminal console.
+
+Let’s use this API to add the slugs for your markdown pages to `MarkdownRemark` nodes.
+
+Change your function so it now only logs `MarkdownRemark` nodes.
+
+```javascript
+exports.onCreateNode = ({ node }) => (
+  if (node.internal.type === `MarkdownRemark`) {
+    console.log(node.internal.type)
+  }
+)
+```
+
+You want to use each markdown file name to create the page slug. So `pandas-and-bananas.md` will become `/pandas-and-bananas/`. But how do you get the file name from the `MarkdownRemark` node? To get it, you need to traverse the “node graph” to its parent `File` node, as `File` nodes contain data you need about files on disk. To do that, modify your function again:
+
+```javascript
+exports.onCreateNode = ({ node, getNode }) => {
+  if (node.internal.type === `MarkdownRemark`) {
+    const fileNode = getNode(node.parent);
+    console.log(`\n`, fileNode.relativePath);
+  }
+};
+```
+
+There in your terminal you should see the relative paths for your two markdown files.
+
+Now let’s create slugs. As the logic for creating slugs from file names can get tricky, the `gatsby-source-filesystem` plugin ships with a function for creating slugs. Let’s use that.
+
+```javascript
+const { createFilePath } = require(`gatsby-source-filesystem`);
+
+exports.onCreateNode = ({ node, getNode }) => {
+  if (node.internal.type === `MarkdownRemark`) {
+    console.log(createFilePath({ node, getNode, basePath: `pages` }));
+  }
+};
+```
+
+The function handles finding the parent `File` node along with creating the slug. Run the development server again and you should see logged to the terminal two slugs, one for each markdown file.
+
+Now let’s add your new slugs directly onto the `MarkdownRemark` nodes. This is powerful, as any data you add to nodes is available to query later with GraphQL. So it’ll be easy to get the slug when it comes time to create the pages.
+
+To do so, you’ll use a function passed to our API implementation called `createNodeField`. This function allows you to create additional fields on nodes created by other plugins. Only the original creator of a node can directly modify the node—all other plugins (including your `gatsby-node.js`) must use this function to create additional fields.
+
+```javascript
+const { createFilePath } = require(`gatsby-source-filesystem`);
+
+exports.onCreateNode = ({ node, getNode, actions }) => {
+  const { createNodeField } = actions;
+  if (node.internal.type === `MarkdownRemark`) {
+    const slug = createFilePath({ node, getNode, basePath: `pages` });
+    createNodeField({
+      node,
+      name: `slug`,
+      value: slug,
+    });
+  }
+};
+```
+
+Restart the development server and open or refresh GraphiQL. Then run this GraphQL query to see your new slugs.
+
+```javascript
+{
+  allMarkdownRemark {
+    edges {
+      node {
+        fields {
+          slug
+        }
+      }
+    }
+  }
+}
+```
+
+Now that the slugs are created, you can create the pages.
+
+### Creating pages
+
+In the same `gatsby-node.js` file, addd the following:
+
+```javascript
+const { createFilePath } = require(`gatsby-source-filesystem`);
+
+exports.onCreateNode = ({ node, getNode, actions }) => {
+  const { createNodeField } = actions;
+  if (node.internal.type === `MarkdownRemark`) {
+    const slug = createFilePath({ node, getNode, basePath: `pages` });
+    createNodeField({
+      node,
+      name: `slug`,
+      value: slug,
+    });
+  }
+};
+
+exports.createPages = ({ graphql, actions }) => {
+  return new Promise((resolve, reject) => {
+    graphql(`
+      {
+        allMarkdownRemark {
+          edges {
+            node {
+              fields {
+                slug
+              }
+            }
+          }
+        }
+      }
+    `).then(result => {
+      console.log(JSON.stringify(result, null, 4));
+      resolve();
+    });
+  });
+};
+```
+
+You’ve added an implementation of the `createPages` API which Gatsby calls so plugins can add pages.
+
+As mentioned in the intro to this part of the tutorial, the steps to programmatically creating pages are:
+
+1. Query data with GraphQL
+2. Map the query results to pages
+
+The above code is the first step for creating pages from your markdown as you’re using the supplied `graphql` function to query the markdown slugs you created. Then you’re logging out the result of the query.
+
+You need one additional thing beyond a slug to create pages: a page template component. Like everything in Gatsby, programmatic pages are powered by React components. When creating a page, you need to specify which component to use.
+
+Create a directory at `src/templates` and then add the following in a file named `src/templates/blog-post.js`.
+
+```javascript
+import React from 'react';
+import Layout from '../components/layout';
+
+export default () => {
+  return (
+    <Layout>
+      <div>Hello blog post</div>
+    </Layout>
+  );
+};
+```
+
+Then update `gatsby-node.js`
+
+```javascript
+const path = require(`path`);
+const { createFilePath } = require(`gatsby-source-filesystem`);
+
+exports.onCreateNode = ({ node, getNode, actions }) => {
+  const { createNodeField } = actions;
+  if (node.internal.type === `MarkdownRemark`) {
+    const slug = createFilePath({ node, getNode, basePath: `pages` });
+    createNodeField({
+      node,
+      name: `slug`,
+      value: slug,
+    });
+  }
+};
+
+exports.createPages = ({ graphql, actions }) => {
+  const { createPage } = actions;
+  return new Promise((resolve, reject) => {
+    graphql(`
+      {
+        allMarkdownRemark {
+          edges {
+            node {
+              fields {
+                slug
+              }
+            }
+          }
+        }
+      }
+    `).then(result => {
+      result.data.allMarkdownRemark.edges.forEach(({ node }) => {
+        createPage({
+          path: node.fields.slug,
+          component: path.resolve(`./src/templates/blog-post.js`),
+          context: {
+            // Data passed to context is available
+            // in page queries as GraphQL variables.
+            slug: node.fields.slug,
+          },
+        });
+      });
+      resolve();
+    });
+  });
+};
+```
+
+Restart the development server and your pages will be created! An easy way to find new pages you create while developing is to go to a random path where Gatsby will helpfully show you a list of pages on the site.
+
+Which is a bit boring and not what you want. Let’s pull in data from your markdown post. Change `src/templates/blog-post.js` to:
+
+```javascript
+import React from 'react';
+import { graphql } from 'gatsby';
+import Layout from '../components/layout';
+
+export default ({ data }) => {
+  const post = data.markdownRemark;
+  return (
+    <Layout>
+      <div>
+        <h1>{post.frontmatter.title}</h1>
+        <div dangerouslySetInnerHTML={{ __html: post.html }} />
+      </div>
+    </Layout>
+  );
+};
+
+export const query = graphql`
+  query($slug: String!) {
+    markdownRemark(fields: { slug: { eq: $slug } }) {
+      html
+      frontmatter {
+        title
+      }
+    }
+  }
+`;
+```
+
+The last step is to link to your new pages from the index page.
+
+Return to `src/pages/index.js` and let’s query for your markdown slugs and create links.
+
+```javascript
+import React from 'react';
+import { css } from 'react-emotion';
+import { Link, graphql } from 'gatsby';
+import { rhythm } from '../utils/typography';
+import Layout from '../components/layout';
+
+export default ({ data }) => {
+  return (
+    <Layout>
+      <div>
+        <h1
+          className={css`
+            display: inline-block;
+            border-bottom: 1px solid;
+          `}
+        >
+          Amazing Pandas Eating Things
+        </h1>
+        <h4>{data.allMarkdownRemark.totalCount} Posts</h4>
+        {data.allMarkdownRemark.edges.map(({ node }) => (
+          <div key={node.id}>
+            <Link
+              to={node.fields.slug}
+              className={css`
+                text-decoration: none;
+                color: inherit;
+              `}
+            >
+              <h3
+                className={css`
+                  margin-bottom: ${rhythm(1 / 4)};
+                `}
+              >
+                {node.frontmatter.title}{' '}
+                <span
+                  className={css`
+                    color: #bbb;
+                  `}
+                >
+                  — {node.frontmatter.date}
+                </span>
+              </h3>
+              <p>{node.excerpt}</p>
+            </Link>
+          </div>
+        ))}
+      </div>
+    </Layout>
+  );
+};
+
+export const query = graphql`
+  query {
+    allMarkdownRemark(sort: { fields: [frontmatter___date], order: DESC }) {
+      totalCount
+      edges {
+        node {
+          id
+          frontmatter {
+            title
+            date(formatString: "DD MMMM, YYYY")
+          }
+          fields {
+            slug
+          }
+          excerpt
+        }
+      }
+    }
+  }
+`;
+```
+
+And there you go! A working, albeit small, blog!
+
+### Challenge
+
+Try playing more with the site. Try adding some more markdown files. Explore querying other data from the `MarkdownRemark` nodes and adding them to the frontpage or blog posts pages.
+
+In this part of the tutorial, we've learned the foundations of building with Gatsby's data layer. You've learned how to _source_ and _transform_ data using plugins. How to use GraphQL to _map_ data to pages. Then how to build _page template components_ where you query for data for each page.
+
+### What's coming next?
+
+Now that we've built a Gatsby site, where do we go next?
+
+- Share your Gatsby site on Twitter and see what other people have created by searching for #gatsbytutorial! Make sure to mention @gatsbyjs in your Tweet, and include the hashtag #gatsbytutorial :)
+
+- You could take a look at some [example sites](https://github.com/gatsbyjs/gatsby/tree/master/examples#gatsby-example-websites)
+
+- Explore more [plugins](https://www.gatsbyjs.org/docs/plugins/)
+
+- See what [other people are building with Gatsby](https://github.com/gatsbyjs/gatsby/#showcase)
+
+- Check out the documentation on [Gatsby's APIs](https://www.gatsbyjs.org/docs/api-specification/), [nodes](https://www.gatsbyjs.org/docs/node-interface/) or [GraphQL](https://www.gatsbyjs.org/docs/graphql-reference/)
