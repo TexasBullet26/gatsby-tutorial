@@ -28,6 +28,7 @@ module.exports = {
                 trackingId: `UA-XXXXXXXX-X`,
             },
         },
+        `gatsby-plugin-react-helmet`,
         `gatsby-plugin-offline`,
         `gatsby-transformer-remark`,
         `gatsby-plugin-emotion`,
