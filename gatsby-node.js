@@ -18,3 +18,32 @@ exports.onCreateNode = ({ node, getNode, actions }) => {
         })
     }
 }
+
+/* Adds an implementation of the `createPages` API which Gatsby calls so plugins 
+ * can add pages. The steps to programmatically creating pages are: 
+ *   1. Query data with GraphQL
+ *   2. Map the query results to pages
+ * The code below is the first step for creating pages from your markdown as you're 
+ * using the supplied `graphql` function to query the markdown slugs you created. 
+ * Then you're logging out the result of the query. 
+ */
+exports.createPages = ({ graphql, actions }) => {
+    return new Promise((resolve, reject) => {
+        graphql(`
+            {
+                allMarkdownRemark {
+                    edges {
+                        node {
+                            fields {
+                                slug
+                            }
+                        }
+                    }
+                }
+            }
+        `).then(result => {
+            console.log(JSON.stringify(result, null, 4))
+            resolve()
+        })
+    })
+}
